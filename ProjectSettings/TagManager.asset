@@ -7,6 +7,7 @@ TagManager:
   - Fire
   - crate
   - weapon
+  - Scope
   layers:
   - Default
   - TransparentFX

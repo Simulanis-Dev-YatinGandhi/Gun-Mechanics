@@ -9,15 +9,17 @@ public class GunManager : MonoBehaviour
     public int ScopeZoom = 25;
 
     //float delay;
-    float shotdelay=0.5f;
+    float shotdelay=0.25f;
 
     float a;
-    float b;
-    float c;
+    float previousShot=0;
+    float timeGap;
     
     
     public Camera fpscam;
-    public Camera scopecam;
+   
+     public GameObject scope;
+    //public Camera scopecam;
     public ParticleSystem muzzle;
     public GameObject damageEffect;
     Animator atr;
@@ -32,31 +34,39 @@ public class GunManager : MonoBehaviour
     bool isReloaded = true;
     bool isScopeOn;
     bool isFirePressed = false;//should be removed find substitue
+    bool isRateOfFire = true;
+    private void Awake()
+    {
+        scope= GameObject.FindGameObjectWithTag("Scope");
+    }
 
     // Update is called once per frame
     private void Start()
     {
-        atr = GetComponent<Animator>();
-        ammoCapacity = ammo;//getting the total ammo in start
-        isScopeOn = true;
+        scope.SetActive(false); // for keeping scope off on start
 
-        //InvokeRepeating("shoot", 0.1f, fireRate);// tried to control the fire rate by using this 
-        //things got messed up
+        atr = GetComponent<Animator>();
+
+        ammoCapacity = ammo;//getting the total ammo in start
+        
+        isScopeOn = true;
     }
     private void Update()
     {
-        shoot();
+        //if(Input.GetButtonDown("Fire1")) 
+        if(Input.GetMouseButton(0)) 
+           shoot();
+       
         ProcessReload();
 
         ScopeOpen();
        
       
-      /*  if (Input.GetKey(KeyCode.A))
+      if (Input.GetKeyDown(KeyCode.C))
         {
-            b = a;
-            FireRate();
+            //
         }
-      */
+      
     }
     private void ProcessReload()
     {
@@ -75,14 +85,15 @@ public class GunManager : MonoBehaviour
         {
             if (isScopeOn)
             {
-                scopecam.gameObject.SetActive(true);
-                //fpscam.GetComponent<Camera>().fieldOfView = ScopeZoom;
+                //scopecam.gameObject.SetActive(true);
+                scope.SetActive(true);
+                scope.GetComponent<Camera>().fieldOfView = ScopeZoom;
                 isScopeOn = false;
             }
             else
             {
-                scopecam.gameObject.SetActive(false);
-               // fpscam.GetComponent<Camera>().fieldOfView = 60;
+                scope.SetActive(false);
+                // scope.GetComponent<Camera>().fieldOfView = 60;
                 isScopeOn = true;
             }
         }
@@ -90,22 +101,24 @@ public class GunManager : MonoBehaviour
 
     private void shoot()    
     {
+        FireRate(a = Time.time);
+
         RaycastHit GunRay; 
         int countFire = 1;
 
-        AmmoHandler(countFire);
+       // AmmoHandler(countFire);
 
         atr.SetBool("recoil", false);// called in float so as to set recoil bool to false and hence
         //no animation is played and when bool is true animation will play
         
         //if (Input.GetMouseButton(0)&&isReloaded)
-        if (Input.GetButtonDown("Fire1") && isReloaded)
+        if ( isReloaded&&isRateOfFire)
         {
-            a = Time.time;
-            b = a;
-            // AmmoHandler(countFire);
+            
+
+            AmmoHandler(countFire);
             isFirePressed = true;
-           if(a-b<2f)
+         
                 if (Physics.Raycast(fpscam.transform.position, fpscam.transform.forward, out GunRay))
                 {
                     Debug.DrawLine(fpscam.transform.position, fpscam.transform.forward, Color.red);
@@ -137,7 +150,7 @@ public class GunManager : MonoBehaviour
         if (isFirePressed)
         {
             ammo -= countFire;
-            Debug.Log(ammo);
+            //Debug.Log(ammo);
             if (ammo <= 0)
             {
                 isReloaded = false;
@@ -161,10 +174,21 @@ public class GunManager : MonoBehaviour
         //Debug.Log("played");
 
     }
-    void FireRate()
+    void FireRate(float nextShot)
     {
-        c = b - a;
-        Debug.Log(c);
+        timeGap=nextShot - previousShot;
+        if(shotdelay<timeGap)
+        {
+            isRateOfFire = true;
+            Debug.Log("fire="+timeGap);
 
+            previousShot = nextShot;//interseting logic if u think in seconds
+        }
+        else
+        {
+            isRateOfFire = false;
+            Debug.Log("hold="+timeGap);
+        }
+       
     }
 }
